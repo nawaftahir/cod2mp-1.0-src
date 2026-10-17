@@ -1,0 +1,59 @@
+#pragma once
+#include "cm_local.h"
+
+extern clipMap_t cm;
+extern clipMapExtra_t cme;
+
+char *CM_EntityString();
+void CM_LoadMapFromBsp(const char *name, bool usePvs);
+
+cmodel_t *CM_ClipHandleToModel( clipHandle_t handle );
+void CM_SetAxialCullOnly(traceWork_t *tw);
+bool CM_CullBox(traceWork_t *tw, const float *origin, const float *halfSize);
+void CM_MeshTestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
+int CM_TestInLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
+void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *start, const float *end, int contentmask);
+int CM_TraceStaticModelComplete(cStaticModel_s *sm, const float *start, const float *end, int contentmask);
+int CM_PointTraceStaticModelsComplete(const float *start, const float *end, int contentmask);
+void CM_PointTraceStaticModels(trace_t *results, const float *start, const float *end, int contentmask);
+int CM_PointSightTraceToEntities(sightpointtrace_t *clip);
+int CM_ClipSightTraceToEntities(sightclip_t *clip);
+int CM_AreaEntities(const float *mins, const float *maxs, int *entityList, int maxcount, int contentmask);
+void CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace);
+void CM_TraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
+void CM_TestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
+void CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace);
+int CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_t origin, const vec3_t angles );
+void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
+int CM_TransformedBoxSightTrace(int hitNum, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask, const float *origin, const float *angles);
+int CM_BoxSightTrace( int oldHitNum, const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs, clipHandle_t model, int brushmask );
+void CM_Trace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask);
+void CM_BoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask);
+void CM_TransformedBoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask, const float *origin, const float *angles);
+void CM_TransformedBoxTraceExternal(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask, const float *origin, const float *angles);
+int CM_SightTraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf);
+bool CM_TraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
+cLeafBrushNode_s * CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, int numLeafBrushes, const float *mins, const float *maxs);
+bool CM_RayTriangleIntersect( const vec3_t orig, const vec3_t dir, const vec3_t vert1, const vec3_t vert2, const vec3_t vert3, float *pt, float *pu, float *pv );
+int CM_SightTraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
+void CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace);
+int CM_SightTraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace);
+int CM_SightTraceThroughBrush(traceWork_t *tw, cbrush_t *brush);
+float CM_RadiusOfModel( clipHandle_t handle );
+int CM_ContentsOfModel( clipHandle_t handle );
+int CM_SightTraceThroughTree(traceWork_t *tw, int num, const float *p1_, const float *p2, trace_t *trace);
+void CM_TraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace);
+void CM_TraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
+void CM_TraceThroughTree(traceWork_t *tw, int num, const float *p1_, const float *p2, trace_t *trace);
+int CM_TraceCylinderThroughCylinder(traceWork_t *tw, const float *vStationary, float fStationaryHalfHeight, float radius, trace_t *trace);
+int CM_TraceSphereThroughSphere(traceWork_t *tw, const float *vStart, const float *vEnd, const float *vStationary, float radius, trace_t *trace);
+void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace);
+void CM_TraceThroughBrush(traceWork_t *tw, cbrush_t *brush, trace_t *trace);
+void CM_PositionTest(traceWork_t *tw, trace_t *trace);
+int CM_PointContents( const vec3_t p, clipHandle_t model );
+void CM_BoxLeafnums_r( leafList_t *ll, int nodenum );
+void CM_StoreLeafs( leafList_t *ll, int nodenum );
+void CM_LinkAllStaticModels();
+void CM_LinkWorld();
+
+qboolean CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction);

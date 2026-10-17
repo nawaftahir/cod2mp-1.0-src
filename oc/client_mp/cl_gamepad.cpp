@@ -1,0 +1,598 @@
+#include "cod2_feature_config.h"
+
+#if COD2_FEATURE_GAMEPAD
+
+#    include <SDL2/SDL.h>
+#    include <math.h>
+
+#    define __m128 __m128_cod2
+#    include "common_types.h"
+#    undef __m128
+
+extern void Sys_QueEvent(int time, sysEventType_t type, int value, int value2,
+                         int ptrLength, void *ptr);
+extern void CL_MouseEvent(const int dx_in, const int dy_in);
+extern void Cbuf_AddText(const char *text);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
+extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
+extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
+extern void Com_Printf(const char *fmt, ...);
+
+extern clientActive_t clients[1];
+
+static int Gamepad_KeyCatchers(void)
+{
+    clientActive_t *cl = clients;
+    return cl ? cl->keyCatchers : 0;
+}
+
+#    define K_AUX1 0xcf
+#    define K_BUTTON_A (K_AUX1 + 0)
+#    define K_BUTTON_B (K_AUX1 + 1)
+#    define K_BUTTON_X (K_AUX1 + 2)
+#    define K_BUTTON_Y (K_AUX1 + 3)
+#    define K_BUTTON_LSHLDR (K_AUX1 + 4)
+#    define K_BUTTON_RSHLDR (K_AUX1 + 5)
+#    define K_BUTTON_BACK (K_AUX1 + 6)
+#    define K_BUTTON_START (K_AUX1 + 7)
+#    define K_BUTTON_LSTICK (K_AUX1 + 8)
+#    define K_BUTTON_RSTICK (K_AUX1 + 9)
+#    define K_DPAD_UP (K_AUX1 + 10)
+#    define K_DPAD_DOWN (K_AUX1 + 11)
+#    define K_DPAD_LEFT (K_AUX1 + 12)
+#    define K_DPAD_RIGHT (K_AUX1 + 13)
+#    define K_BUTTON_LTRIG (K_AUX1 + 14)
+#    define K_BUTTON_RTRIG (K_AUX1 + 15)
+
+#    define K_ENTER 0x0d
+#    define K_ESCAPE 0x1b
+#    define K_BACKSPACE 0x7f
+#    define K_UPARROW 0x9a
+#    define K_DOWNARROW 0x9b
+#    define K_LEFTARROW 0x9c
+#    define K_RIGHTARROW 0x9d
+
+static int Gamepad_SdlButtonToKey(int sdlButton)
+{
+    switch (sdlButton) {
+    case SDL_CONTROLLER_BUTTON_A:
+        return K_BUTTON_A;
+    case SDL_CONTROLLER_BUTTON_B:
+        return K_BUTTON_B;
+    case SDL_CONTROLLER_BUTTON_X:
+        return K_BUTTON_X;
+    case SDL_CONTROLLER_BUTTON_Y:
+        return K_BUTTON_Y;
+    case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+        return K_BUTTON_LSHLDR;
+    case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+        return K_BUTTON_RSHLDR;
+    case SDL_CONTROLLER_BUTTON_BACK:
+        return K_BUTTON_BACK;
+    case SDL_CONTROLLER_BUTTON_START:
+        return K_BUTTON_START;
+    case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+        return K_BUTTON_LSTICK;
+    case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
+        return K_BUTTON_RSTICK;
+    case SDL_CONTROLLER_BUTTON_DPAD_UP:
+        return K_DPAD_UP;
+    case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+        return K_DPAD_DOWN;
+    case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+        return K_DPAD_LEFT;
+    case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+        return K_DPAD_RIGHT;
+    default:
+        return 0;
+    }
+}
+
+static int Gamepad_NavRemap(int key)
+{
+    switch (key) {
+    case K_DPAD_UP:
+        return K_UPARROW;
+    case K_DPAD_DOWN:
+        return K_DOWNARROW;
+    case K_DPAD_LEFT:
+        return K_LEFTARROW;
+    case K_DPAD_RIGHT:
+        return K_RIGHTARROW;
+    case K_BUTTON_A:
+        return K_ENTER;
+    case K_BUTTON_B:
+        return K_ESCAPE;
+    case K_BUTTON_X:
+        return K_BACKSPACE;
+    default:
+        return 0;
+    }
+}
+
+enum GamepadPhysicalAxis {
+    PHYS_LSTICK_X = 0,
+    PHYS_LSTICK_Y,
+    PHYS_RSTICK_X,
+    PHYS_RSTICK_Y,
+    PHYS_LTRIG,
+    PHYS_RTRIG,
+    PHYS_AXIS_COUNT
+};
+
+enum GamepadVirtualAxis {
+    VIRT_LOOK_X = 0,
+    VIRT_LOOK_Y,
+    VIRT_MOVE_X,
+    VIRT_MOVE_Y,
+    VIRT_AXIS_COUNT
+};
+
+enum GamepadMapping {
+    MAP_LINEAR = 0,
+    MAP_SQUARED = 1
+};
+
+static const struct {
+    int physical;
+    int mapping;
+} g_virtualAxisBind[VIRT_AXIS_COUNT] = {
+    [VIRT_LOOK_X] = { PHYS_RSTICK_X, MAP_SQUARED },
+    [VIRT_LOOK_Y] = { PHYS_RSTICK_Y, MAP_SQUARED },
+    [VIRT_MOVE_X] = { PHYS_LSTICK_X, MAP_LINEAR },
+    [VIRT_MOVE_Y] = { PHYS_LSTICK_Y, MAP_LINEAR },
+};
+
+static const dvar_t *cl_gamepadEnable;
+static const dvar_t *cl_gamepadLookSensitivity;
+static const dvar_t *cl_gamepadDeadzone;
+static const dvar_t *cl_gamepadInvertY;
+
+static int g_buttonLayoutSouthpaw;
+
+static int stricmp_local(const char *a, const char *b)
+{
+    while (*a && *b) {
+        int ca = *a, cb = *b;
+        if (ca >= 'A' && ca <= 'Z')
+            ca += 32;
+        if (cb >= 'A' && cb <= 'Z')
+            cb += 32;
+        if (ca != cb)
+            return ca - cb;
+        a++;
+        b++;
+    }
+    return (unsigned char)*a - (unsigned char)*b;
+}
+
+#    define GAMEPAD_MAX_PADS 4
+static SDL_GameController *g_pads[GAMEPAD_MAX_PADS];
+static int g_padInstance[GAMEPAD_MAX_PADS];
+static int g_gamepadInit;
+
+#    define GAMEPAD_BUTTON_STATES 256
+static unsigned char g_buttonDown[GAMEPAD_BUTTON_STATES];
+
+static int g_gamepadActiveDevice;
+
+int CL_Gamepad_IsConnected(void)
+{
+    int i;
+    if (!g_gamepadInit)
+        return 0;
+    for (i = 0; i < GAMEPAD_MAX_PADS; ++i)
+        if (g_pads[i])
+            return 1;
+    return 0;
+}
+
+int CL_Gamepad_IsActiveDevice(void)
+{
+    return (g_gamepadActiveDevice && CL_Gamepad_IsConnected()) ? 1 : 0;
+}
+
+void CL_Gamepad_NoteKbmActive(void)
+{
+    g_gamepadActiveDevice = 0;
+}
+
+static SDL_GameController *Gamepad_ActivePad(void)
+{
+    int i;
+    for (i = 0; i < GAMEPAD_MAX_PADS; ++i)
+        if (g_pads[i])
+            return g_pads[i];
+    return NULL;
+}
+
+static void Gamepad_Open(int joystickIndex)
+{
+    int i;
+    SDL_GameController *gc;
+    SDL_JoystickID id;
+
+    if (!SDL_IsGameController(joystickIndex))
+        return;
+
+    gc = SDL_GameControllerOpen(joystickIndex);
+    if (!gc)
+        return;
+
+    id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gc));
+    for (i = 0; i < GAMEPAD_MAX_PADS; ++i) {
+        if (g_pads[i] && g_padInstance[i] == id) {
+            SDL_GameControllerClose(gc);
+            return;
+        }
+    }
+    for (i = 0; i < GAMEPAD_MAX_PADS; ++i) {
+        if (!g_pads[i]) {
+            g_pads[i] = gc;
+            g_padInstance[i] = id;
+            Com_Printf("Gamepad connected: %s\n", SDL_GameControllerName(gc));
+            return;
+        }
+    }
+    SDL_GameControllerClose(gc);
+}
+
+static void Gamepad_CloseByInstance(int instanceId)
+{
+    int i;
+    for (i = 0; i < GAMEPAD_MAX_PADS; ++i) {
+        if (g_pads[i] && g_padInstance[i] == instanceId) {
+            Com_Printf("Gamepad disconnected: %s\n",
+                       SDL_GameControllerName(g_pads[i]));
+            SDL_GameControllerClose(g_pads[i]);
+            g_pads[i] = NULL;
+            g_padInstance[i] = -1;
+            return;
+        }
+    }
+}
+
+void CL_Gamepad_HandleDeviceEvent(int sdlEventType, int which)
+{
+    if (!g_gamepadInit)
+        return;
+    if (sdlEventType == SDL_CONTROLLERDEVICEADDED)
+        Gamepad_Open(which);
+    else if (sdlEventType == SDL_CONTROLLERDEVICEREMOVED)
+        Gamepad_CloseByInstance(which);
+}
+
+void CL_Gamepad_Init(void)
+{
+    int i, n;
+
+    cl_gamepadEnable = Dvar_RegisterBool("cl_gamepadEnable", 1, 0x1);
+    cl_gamepadLookSensitivity = Dvar_RegisterFloat("cl_gamepadLookSensitivity", 8.0f, 0.1f, 50.0f, 0x1);
+    cl_gamepadDeadzone = Dvar_RegisterFloat("cl_gamepadDeadzone", 0.20f, 0.0f, 0.9f, 0x1);
+    cl_gamepadInvertY = Dvar_RegisterBool("cl_gamepadInvertY", 0, 0x1);
+
+    if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) != 0) {
+        Com_Printf("Gamepad: SDL_INIT_GAMECONTROLLER failed: %s\n", SDL_GetError());
+        return;
+    }
+    g_gamepadInit = 1;
+
+    for (i = 0; i < GAMEPAD_MAX_PADS; ++i)
+        g_padInstance[i] = -1;
+
+    n = SDL_NumJoysticks();
+    for (i = 0; i < n; ++i)
+        Gamepad_Open(i);
+
+    Cbuf_AddText("bind AUX1 \"+gostand\"\n");
+    Cbuf_AddText("bind AUX2 \"+stance\"\n");
+    Cbuf_AddText("bind AUX3 \"+usereload\"\n");
+    Cbuf_AddText("bind AUX4 \"+melee\"\n");
+    Cbuf_AddText("bind AUX5 \"weapprev\"\n");
+    Cbuf_AddText("bind AUX6 \"weapnext\"\n");
+    Cbuf_AddText("bind AUX7 \"toggleconsole\"\n");
+    Cbuf_AddText("bind AUX8 \"togglemenu\"\n");
+    Cbuf_AddText("bind AUX9 \"+breath_binoculars\"\n");
+    Cbuf_AddText("bind AUX10 \"+sprint\"\n");
+    Cbuf_AddText("bind AUX11 \"+frag\"\n");
+    Cbuf_AddText("bind AUX12 \"+smoke\"\n");
+    Cbuf_AddText("bind AUX13 \"weapprev\"\n");
+    Cbuf_AddText("bind AUX14 \"weapnext\"\n");
+    Cbuf_AddText("bind AUX15 \"+speed\"\n");
+    Cbuf_AddText("bind AUX16 \"+attack\"\n");
+}
+
+void CL_Gamepad_ApplyButtonConfig(const char *preset)
+{
+    if (!preset || !preset[0])
+        preset = "default";
+
+    if (!stricmp_local(preset, "southpaw")) {
+
+        g_buttonLayoutSouthpaw = 1;
+    } else {
+        g_buttonLayoutSouthpaw = 0;
+    }
+
+    if (!stricmp_local(preset, "legacy")) {
+
+        Cbuf_AddText("bind AUX1 \"+gostand\"\n");
+        Cbuf_AddText("bind AUX2 \"+stance\"\n");
+        Cbuf_AddText("bind AUX3 \"+melee\"\n");
+        Cbuf_AddText("bind AUX4 \"+usereload\"\n");
+    } else if (!stricmp_local(preset, "tactical")) {
+
+        Cbuf_AddText("bind AUX1 \"+gostand\"\n");
+        Cbuf_AddText("bind AUX2 \"+melee\"\n");
+        Cbuf_AddText("bind AUX3 \"+usereload\"\n");
+        Cbuf_AddText("bind AUX4 \"+stance\"\n");
+    } else {
+
+        Cbuf_AddText("bind AUX1 \"+gostand\"\n");
+        Cbuf_AddText("bind AUX2 \"+stance\"\n");
+        Cbuf_AddText("bind AUX3 \"+usereload\"\n");
+        Cbuf_AddText("bind AUX4 \"+melee\"\n");
+    }
+    Com_Printf("Controller layout: %s\n", preset);
+}
+
+void CL_Gamepad_Shutdown(void)
+{
+    int i;
+    if (!g_gamepadInit)
+        return;
+    for (i = 0; i < GAMEPAD_MAX_PADS; ++i) {
+        if (g_pads[i]) {
+            SDL_GameControllerClose(g_pads[i]);
+            g_pads[i] = NULL;
+            g_padInstance[i] = -1;
+        }
+    }
+    SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER);
+    g_gamepadInit = 0;
+}
+
+static float Gamepad_RawAxis(SDL_GameController *gc, int physical)
+{
+    int raw;
+    switch (physical) {
+    case PHYS_LSTICK_X:
+        raw = SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_LEFTX);
+        break;
+    case PHYS_LSTICK_Y:
+        raw = SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_LEFTY);
+        break;
+    case PHYS_RSTICK_X:
+        raw = SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_RIGHTX);
+        break;
+    case PHYS_RSTICK_Y:
+        raw = SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_RIGHTY);
+        break;
+    case PHYS_LTRIG:
+        raw = SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+        break;
+    case PHYS_RTRIG:
+        raw = SDL_GameControllerGetAxis(gc, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+        break;
+    default:
+        return 0.0f;
+    }
+    return (float)raw / 32767.0f;
+}
+
+static float Gamepad_VirtualAxis(SDL_GameController *gc, int virt)
+{
+    int physical = g_virtualAxisBind[virt].physical;
+    int mapping = g_virtualAxisBind[virt].mapping;
+    float deadzone = cl_gamepadDeadzone->current.value;
+    float x, mag, other;
+
+    if (g_buttonLayoutSouthpaw) {
+        switch (physical) {
+        case PHYS_LSTICK_X:
+            physical = PHYS_RSTICK_X;
+            break;
+        case PHYS_LSTICK_Y:
+            physical = PHYS_RSTICK_Y;
+            break;
+        case PHYS_RSTICK_X:
+            physical = PHYS_LSTICK_X;
+            break;
+        case PHYS_RSTICK_Y:
+            physical = PHYS_LSTICK_Y;
+            break;
+        default:
+            break;
+        }
+    }
+
+    x = Gamepad_RawAxis(gc, physical);
+
+    switch (physical) {
+    case PHYS_LSTICK_X:
+        other = Gamepad_RawAxis(gc, PHYS_LSTICK_Y);
+        break;
+    case PHYS_LSTICK_Y:
+        other = Gamepad_RawAxis(gc, PHYS_LSTICK_X);
+        break;
+    case PHYS_RSTICK_X:
+        other = Gamepad_RawAxis(gc, PHYS_RSTICK_Y);
+        break;
+    case PHYS_RSTICK_Y:
+        other = Gamepad_RawAxis(gc, PHYS_RSTICK_X);
+        break;
+    default:
+        other = 0.0f;
+        break;
+    }
+
+    mag = sqrtf(x * x + other * other);
+    if (mag < deadzone)
+        return 0.0f;
+
+    if (mag > 0.0f) {
+        float scaled = (mag - deadzone) / (1.0f - deadzone);
+        if (scaled > 1.0f)
+            scaled = 1.0f;
+        x = x * (scaled / mag);
+    }
+
+    if (mapping == MAP_SQUARED) {
+
+        x = x * fabsf(x);
+    }
+    return x;
+}
+
+int CL_GamepadAdsActive(void)
+{
+    return g_buttonDown[K_BUTTON_LTRIG] ? 1 : 0;
+}
+
+static void Gamepad_SendKey(int key, int down)
+{
+    if (key <= 0 || key >= GAMEPAD_BUTTON_STATES)
+        return;
+    if (g_buttonDown[key] == (unsigned char)down)
+        return;
+    g_buttonDown[key] = (unsigned char)down;
+
+    if (Gamepad_KeyCatchers() & (1 | 8 | 0x10)) {
+        int nav = Gamepad_NavRemap(key);
+        if (nav)
+            key = nav;
+    }
+    Sys_QueEvent(0, SE_KEY, key, down, 0, 0);
+}
+
+void CL_Gamepad_Frame(void)
+{
+    SDL_GameController *gc;
+    int b;
+    float lx, ly;
+    float sens, look;
+    int dx, dy;
+
+    if (!g_gamepadInit || !cl_gamepadEnable->current.enabled)
+        return;
+
+    gc = Gamepad_ActivePad();
+    if (!gc)
+        return;
+
+    for (b = 0; b < SDL_CONTROLLER_BUTTON_MAX; ++b) {
+        int key = Gamepad_SdlButtonToKey(b);
+        if (key) {
+            int down = SDL_GameControllerGetButton(gc, b) ? 1 : 0;
+
+            if (down && !g_buttonDown[key])
+                g_gamepadActiveDevice = 1;
+            Gamepad_SendKey(key, down);
+        }
+    }
+
+    {
+        float lt = Gamepad_RawAxis(gc, PHYS_LTRIG);
+        float rt = Gamepad_RawAxis(gc, PHYS_RTRIG);
+        int ltDown = lt > 0.5f ? 1 : 0;
+        int rtDown = rt > 0.5f ? 1 : 0;
+        if ((ltDown && !g_buttonDown[K_BUTTON_LTRIG]) ||
+            (rtDown && !g_buttonDown[K_BUTTON_RTRIG]))
+            g_gamepadActiveDevice = 1;
+        Gamepad_SendKey(K_BUTTON_LTRIG, ltDown);
+        Gamepad_SendKey(K_BUTTON_RTRIG, rtDown);
+    }
+
+    if (Gamepad_VirtualAxis(gc, VIRT_LOOK_X) != 0.0f ||
+        Gamepad_VirtualAxis(gc, VIRT_LOOK_Y) != 0.0f ||
+        Gamepad_VirtualAxis(gc, VIRT_MOVE_X) != 0.0f ||
+        Gamepad_VirtualAxis(gc, VIRT_MOVE_Y) != 0.0f)
+        g_gamepadActiveDevice = 1;
+
+    if (Gamepad_KeyCatchers() & (1 | 8 | 0x10))
+        return;
+
+    lx = Gamepad_VirtualAxis(gc, VIRT_LOOK_X);
+    ly = Gamepad_VirtualAxis(gc, VIRT_LOOK_Y);
+    if (cl_gamepadInvertY->current.enabled)
+        ly = -ly;
+
+    sens = cl_gamepadLookSensitivity->current.value;
+    look = sens;
+
+    {
+        float fx = lx * look, fy = ly * look;
+        dx = (int)fx;
+        dy = (int)fy;
+    }
+    if (dx || dy)
+        CL_MouseEvent(dx, dy);
+}
+
+void CL_Gamepad_Move(usercmd_t *cmd)
+{
+    SDL_GameController *gc;
+    float mx, my;
+    int side, forward;
+
+    if (!g_gamepadInit || !cl_gamepadEnable->current.enabled)
+        return;
+    if (Gamepad_KeyCatchers() & (1 | 8 | 0x10))
+        return;
+
+    gc = Gamepad_ActivePad();
+    if (!gc)
+        return;
+
+    mx = Gamepad_VirtualAxis(gc, VIRT_MOVE_X);
+    my = Gamepad_VirtualAxis(gc, VIRT_MOVE_Y);
+
+    side = (int)cmd->rightmove + (int)(mx * 127.0f);
+    forward = (int)cmd->forwardmove - (int)(my * 127.0f);
+
+    if (side > 127)
+        side = 127;
+    else if (side < -127)
+        side = -127;
+    if (forward > 127)
+        forward = 127;
+    else if (forward < -127)
+        forward = -127;
+
+    cmd->rightmove = (signed char)side;
+    cmd->forwardmove = (signed char)forward;
+}
+
+#    if COD2_FEATURE_RUMBLE
+void CL_Gamepad_SetRumble(float lowFreq, float highFreq)
+{
+    SDL_GameController *gc;
+    Uint16 lo, hi;
+
+    if (!g_gamepadInit)
+        return;
+    gc = Gamepad_ActivePad();
+    if (!gc)
+        return;
+
+    if (lowFreq < 0.0f)
+        lowFreq = 0.0f;
+    else if (lowFreq > 1.0f)
+        lowFreq = 1.0f;
+    if (highFreq < 0.0f)
+        highFreq = 0.0f;
+    else if (highFreq > 1.0f)
+        highFreq = 1.0f;
+
+    lo = (Uint16)(lowFreq * 65535.0f);
+    hi = (Uint16)(highFreq * 65535.0f);
+
+    SDL_GameControllerRumble(gc, lo, hi, 250);
+}
+#    endif
+
+#else
+
+typedef int cl_gamepad_translation_unit_not_empty;
+
+#endif

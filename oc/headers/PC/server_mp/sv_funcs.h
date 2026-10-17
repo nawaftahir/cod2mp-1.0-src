@@ -1,0 +1,164 @@
+#ifndef CLEAN_PC_SERVER_MP_SV_FUNCS_H
+#define CLEAN_PC_SERVER_MP_SV_FUNCS_H
+
+#include "common_types.h"
+
+const char *SV_GetMapBaseName(const char *mapname);
+void SV_Heartbeat_f(void);
+void SV_GameCompleteStatus_f(void);
+void SV_AddDedicatedCommands(void);
+void SV_RemoveOperatorCommands(void);
+void SV_AddOperatorCommands(void);
+
+void SV_ExecDbg(const char *fmt, int clSid, int svSid, int clState);
+void SV_AuthorizeRequest(struct netadr_t from, int challenge, const char *clientPBGuid);
+void SV_BanGuidBriefly(int guid);
+void SV_UnbanClient(const char *name);
+void SV_AuthorizeIpPacket(netadr_t from);
+void SV_UserinfoChanged(client_t *cl);
+void SV_FreeClientScriptPers(void);
+void SV_DelayDropClient(client_t *drop, const char *reason);
+void SV_SendClientGameState(client_t *client);
+void SV_ClientEnterWorld(client_t *client, const dvar_t *(*cmd)[4]);
+void SV_DoneDownload_f(client_t *cl);
+void SV_RetransmitDownload_f(client_t *cl);
+void SV_WriteDownloadToClient(client_t *cl, msg_t *msg);
+qboolean SV_WWWRedirectClient(client_t *cl, msg_t *msg);
+void SV_WWWDownload_f(client_t *cl);
+void SV_VerifyIwds_f(client_t *cl);
+void SV_ResetPureClient_f(client_t *cl);
+void SV_UpdateUserinfo_f(client_t *cl);
+void SV_MutePlayer_f(client_t *cl);
+void SV_UnmutePlayer_f(client_t *cl);
+float SV_FX_GetVisibility(const vec_t *start, const vec_t *end);
+void SV_ExecuteClientCommand(client_t *cl, const char *s, qboolean clientOK);
+void SV_ClientThink(client_t *cl, usercmd_t *cmd);
+void SV_GetChallenge(netadr_t from);
+void SV_FreeClient(client_t *cl);
+void SV_DropClient(client_t *drop, const char *reason);
+void SV_Disconnect_f(client_t *cl);
+void SV_BanClient(client_t *cl);
+void SV_DirectConnect(netadr_t from);
+void SV_FreeClients(void);
+void SV_StopDownload_f(client_t *cl);
+void SV_NextDownload_f(client_t *cl);
+void SV_BeginDownload_f(client_t *cl);
+void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta);
+void SV_ExecuteClientMessage(client_t *cl, msg_t *msg);
+gentity_t *SV_AddTestClient(void);
+
+gentity_t *SV_GentityNum(int num);
+playerState_t *SV_GameClientNum(int num);
+int SV_SvEntityForGentity(const gentity_t *gEnt);
+void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
+void SV_GameDropClient(int clientNum, const char *reason);
+void SV_GetServerinfo(char *buffer, int bufferSize);
+void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient);
+void SV_GetUsercmd(int clientNum, usercmd_t *cmd);
+struct XModel *SV_XModelGet(const char *name);
+void SV_DObjDumpInfo(gentity_t *ent);
+void SV_ResetSkeletonCache(void);
+qboolean SV_DObjUpdateServerTime(gentity_t *ent, float dtime, qboolean bNotify);
+void SV_DObjInitServerTime(gentity_t *ent, float dtime);
+void SV_DObjGetHierarchyBits(gentity_t *ent, int boneIndex, int *partBits);
+void SV_DObjCalcAnim(gentity_t *ent, int *partBits);
+void SV_DObjCalcSkel(gentity_t *ent, int *partBits);
+int SV_DObjGetBoneIndex(gentity_t *ent, unsigned int boneName);
+DObjAnimMat_s *SV_DObjGetMatrixArray(gentity_t *ent);
+void SV_DObjDisplayAnim(gentity_t *ent);
+struct XAnimTree_s *SV_DObjGetTree(gentity_t *ent);
+qboolean SV_MapExists(const char *name);
+void SV_ResetEntityParsePoint(void);
+qboolean SV_DObjExists(gentity_t *ent);
+void SV_SetWeaponInfoMemory(void);
+qboolean SV_GetEntityToken(char *buffer, int bufferSize);
+int SV_GetGuid(int clientNum);
+int SV_GetClientPing(int clientNum);
+qboolean SV_IsLocalClient(int clientNum);
+void SV_SetGametype(void);
+void SV_RestartGameProgs(qboolean savepersist);
+void SV_InitGameProgs(qboolean savepersist);
+qboolean SV_GameCommand(void);
+void SV_SetBrushModel(gentity_t *ent);
+qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t *gEnt);
+gentity_t *SV_GEntityForSvEntity(svEntity_t *svEnt);
+void SV_XModelDebugBoxes(gentity_t *ent);
+void SV_ShutdownGameProgs(void);
+qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum);
+qboolean SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex);
+qboolean SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits);
+
+Bool SV_Loaded(void);
+void SV_GetConfigstring(int index, char *buffer, int bufferSize);
+const char *SV_GetConfigstringConst(int index);
+void SV_SetUserinfo(int index, const char *val);
+void SV_GetUserinfo(int index, char *buffer, int bufferSize);
+void SV_SetExpectedHunkUsage(char *mapname);
+void SV_EnableArchivedSnapshot(qboolean bEnable);
+void SV_InitArchivedSnapshot(void);
+void SV_InitDvar(void);
+void SV_Init(void);
+void SV_SetConfigstring(const int index, const char *val);
+void SV_SetConfigValueForKey(int start, int max, const char *key, const char *value);
+void SV_Shutdown(char *finalmsg);
+void SV_Startup(void);
+void SV_ChangeMaxClients(void);
+void SV_SpawnServer(const char *server);
+
+void SV_PktEvtDbg(const char *fmt, int netchanResult, int clState, int serverId, int relAck);
+void SV_AddServerCommand(client_t *client, svscmd_type type, const char *cmd);
+void SV_VoicePacket(netadr_t from, msg_t *msg);
+void SVC_Status(netadr_t from);
+void SVC_GameCompleteStatus(netadr_t from);
+void SVC_Info(netadr_t from);
+void SV_ConnectionlessPacket(netadr_t from, msg_t *msg);
+void SV_PacketEvent(netadr_t from, msg_t *msg);
+void SV_FreeClientScriptId(client_t *cl);
+void SV_RunFrame(void);
+void SV_BotUserMove(client_t *cl);
+void SV_SendServerCommand(client_t *cl, svscmd_type type, const char *fmt, ...);
+void SV_Frame(int msec);
+
+void SV_FlushRedirect(char *outputbuf);
+void SVC_RemoteCommand(struct netadr_t from, msg_t *msg);
+void SV_MatchEnd(void);
+const netadr_t *SV_MasterAddress(void);
+void SV_MasterGameCompleteStatus(void);
+void SV_MasterHeartbeat(const char *hbname);
+void SV_MasterShutdown(void);
+
+void SV_Netchan_Decode(client_t *client, byte *data, int size);
+Bool SV_Netchan_TransmitNextFragment(netchan_t *chan);
+Bool SV_Netchan_Transmit(client_t *client, int length, byte *data);
+void SV_Netchan_AddOOBProfilePacket(int iLength);
+void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole);
+
+void SV_UpdateServerCommandsToClient(client_t *client, msg_t *msg);
+void SV_ArchiveSnapshot(void);
+void SV_SendMessageToClient(msg_t *msg, client_t *client);
+qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, int (*ps)[4], void *cs);
+Bool SV_GetClientPositionAtTime(int clientNum, int gametime, vec_t *pos);
+void SV_SendClientSnapshot(client_t *client);
+void SV_SendClientMessages(void);
+
+void SV_SendClientVoiceData(client_t *client);
+Bool SV_ClientWantsVoiceData(int clientNum);
+Bool SV_ClientHasClientMuted(int listener, int talker);
+void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacket);
+void SV_UserVoice(client_t *cl, msg_t *msg);
+void SV_PreGameUserVoice(client_t *cl, msg_t *msg);
+
+clipHandle_t SV_ClipHandleForEntity(const gentity_t *ent);
+void SV_UnlinkEntity(gentity_t *gEnt);
+int SV_SightTrace(int *hitNum, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum0, int passEntityNum1, int contentmask);
+void SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask, qboolean locational, unsigned char *priorityMap, qboolean staticmodels);
+qboolean SV_TracePassed(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum0, int passEntityNum1, int contentmask, qboolean locational, qboolean staticmodels);
+void SV_LinkEntity(gentity_t *gEnt);
+void SV_ClipMoveToEntity(const moveclip_t *clip, svEntity_t *check, trace_t *trace);
+void SV_PointTraceToEntity(const pointtrace_t *clip, svEntity_t *check, trace_t *trace);
+int SV_ClipSightToEntity(const sightclip_t *clip, svEntity_t *check);
+int SV_PointSightTraceToEntity(const sightpointtrace_t *clip, svEntity_t *check);
+int SV_SightTraceToEntity(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int entityNum, int contentmask);
+int SV_PointContents(const vec_t *p, int passEntityNum, int contentmask);
+
+#endif

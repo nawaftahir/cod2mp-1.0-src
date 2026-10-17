@@ -1,0 +1,7 @@
+// icon is extracted from the local retail exe at build time (../rsrc.py); never committed
+1 ICON "..\\build\\cod2mp.ico"
+
+STRINGTABLE
+BEGIN
+    1 "Call of Duty"
+END

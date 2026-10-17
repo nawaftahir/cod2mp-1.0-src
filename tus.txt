@@ -1,0 +1,269 @@
+# translation units in link order (client 1.0 order where measured), then extra cl flags
+# not yet placed in the client
+# client layer (draft, opencod2)
+universal/assertive.cpp
+qcommon/buildnumber.c
+oc/client_mp/cl_cgame_mp.cpp
+oc/client_mp/cl_cin_mp.cpp
+oc/client_mp/cl_console_mp.cpp
+oc/client_mp/cl_input.cpp
+oc/client_mp/cl_keys_mp.cpp
+oc/client_mp/cl_main_mp.cpp
+oc/client_mp/cl_devgui.cpp
+oc/client_mp/cl_net_chan_mp.cpp
+oc/client_mp/cl_parse_mp.cpp
+oc/client_mp/cl_scrn_mp.cpp
+oc/client_mp/cl_ui_mp.cpp
+qcommon/cm_load.cpp
+qcommon/cm_load_obj.cpp
+qcommon/cm_mesh.cpp
+qcommon/cm_polylib.cpp
+qcommon/cm_staticmodel.cpp
+qcommon/cm_staticmodel_load_obj.cpp
+qcommon/cm_test.cpp
+qcommon/cm_trace.cpp
+qcommon/cm_tracebox.cpp
+qcommon/cm_world.cpp
+qcommon/cmd.cpp
+qcommon/com_bsp_load_obj.cpp
+universal/com_file_wrapper.cpp
+qcommon/unused_stubs.cpp
+universal/com_files.cpp
+universal/com_math.cpp
+universal/com_memory.cpp
+universal/com_playerprofile.cpp
+universal/com_shared.cpp
+universal/com_sndalias.cpp
+universal/com_sndalias_load_obj.cpp
+qcommon/common.cpp
+qcommon/legacyhacks.cpp
+qcommon/mem_track.cpp
+qcommon/dobj_management.cpp
+universal/dvar.cpp
+universal/dvar_cmds.cpp
+universal/com_files_mp.cpp
+qcommon/huffman.cpp
+botlib/l_memory.cpp
+botlib/l_precomp.cpp
+botlib/l_script.cpp
+qcommon/md4.cpp
+universal/memfile.cpp
+qcommon/msg_mp.cpp
+qcommon/net_chan_mp.cpp
+universal/q_parse.cpp
+universal/q_shared.cpp
+oc/client_mp/screen_placement_mp.cpp
+oc/snd.cpp
+oc/snd_utils.cpp
+oc/qcommon/statmonitor.cpp
+universal/surfaceflags.cpp
+server/sv_ccmds_mp.cpp
+server/sv_client_mp.cpp
+server/sv_game_mp.cpp
+server/sv_init_mp.cpp
+server/sv_main_mp.cpp
+server/sv_net_chan_mp.cpp
+server/sv_snapshot_mp.cpp
+server/sv_voice_mp.cpp
+server/sv_world_mp.cpp
+oc/win32/win_threads.cpp
+oc/ui/ui_component.cpp
+win32/win_common.cpp
+win32/win_configure.cpp
+win32/win_input.cpp
+oc/win32/win_localize.cpp
+win32/win_main.cpp
+win32/win_net.cpp
+win32/win_shared.cpp
+win32/win_splash.cpp
+oc/win32/win_syscon.cpp
+win32/win_wndproc.cpp
+script/scr_animtree.cpp
+script/scr_compiler.cpp
+script/scr_debugger.cpp
+script/scr_evaluate.cpp
+script/scr_main.cpp
+script/scr_memorytree.cpp
+script/scr_parser.cpp
+script/scr_parsetree.cpp
+script/scr_stringlist.cpp
+script/scr_tempmemory.cpp
+stringed/loc_dvars.cpp
+universal/com_memory_high.cpp
+universal/dedicated_dvar.cpp
+unknown/after_assertive.cpp
+unknown/after_bg_weapons_load_obj.cpp
+unknown/after_cm_polylib.cpp
+unknown/after_com_memory.cpp
+unknown/after_com_sndalias_load_obj.cpp
+unknown/after_dobj_management.cpp
+unknown/after_g_load_utils.cpp
+unknown/after_g_misc_mp.cpp
+unknown/after_g_mover_mp.cpp
+unknown/after_msg_mp.cpp
+unknown/after_scr_compiler.cpp
+unknown/after_scr_const_mp.cpp
+unknown/after_scr_tempmemory.cpp
+unknown/after_scr_vm.cpp
+unknown/after_xmodel_utils.cpp
+script/scr_variable.cpp
+script/scr_vm.cpp
+script/scr_yacc.c
+xanim/dobj.cpp
+xanim/xanim.cpp
+xanim/xanim_load.cpp
+xanim/xmodel.cpp
+xanim/xmodel_load.cpp
+xanim/r_xsurface_load_obj.cpp
+xanim/xmodel_load_obj.cpp
+xanim/xmodel_utils.cpp
+EffectsCore/FxArchive.cpp
+EffectsCore/FxChannel.cpp
+EffectsCore/FxCurve.cpp
+EffectsCore/FxCurve_load_obj.cpp
+EffectsCore/fx_dvars.cpp
+EffectsCore/Fxexport.cpp
+EffectsCore/FxMemMgr.cpp
+EffectsCore/FxPrimitives.cpp
+EffectsCore/FxProfile.cpp
+EffectsCore/FxScheduler.cpp
+EffectsCore/FxScheduler_load_obj.cpp
+EffectsCore/FxSystem.cpp
+EffectsCore/FxTemplate.cpp
+EffectsCore/FxUtil.cpp
+EffectsCore/GenericParser2.cpp
+zlib/adler32.c
+zlib/compress.c
+zlib/deflate.c
+zlib/infblock.c
+zlib/infcodes.c
+zlib/inffast.c
+zlib/inflate.c
+zlib/inftrees.c
+zlib/infutil.c
+zlib/trees.c
+zlib/uncompr.c
+zlib/unzip.c
+zlib/zutil.c
+stringed/stringed_hooks.cpp
+stringed/stringed_ingame.cpp
+stringed/stringed_interface.cpp
+oc/win32/cinematics.cpp
+oc/client_mp/cl_main_pc_mp.cpp
+oc/client_mp/cl_ui_pc_mp.cpp
+oc/win32/snd_driver.cpp
+server/sv_main_pc_mp.cpp
+oc/win32/win_voice.cpp
+oc/alias.cpp
+oc/globals.cpp
+compat/imports.cpp
+oc/groupvoice/mixer.cpp
+oc/groupvoice/decode.cpp
+oc/groupvoice/encode.cpp
+oc/groupvoice/play.cpp
+groupvoice/play_dsound.cpp
+oc/groupvoice/record.cpp
+groupvoice/record_dsound.cpp
+oc/cgame_mp/cg_rumble_mp.cpp
+oc/cgame_mp/cg_main_mp.cpp
+oc/cgame_mp/cg_devgui.cpp
+devgui/devgui.cpp
+devgui/devgui_input.cpp
+devgui/devgui_util.cpp
+oc/cgame_mp/cg_consolecmds_mp.cpp
+oc/cgame_mp/cg_drawtools_mp.cpp
+game/g_debug_mp.cpp
+oc/cgame_mp/cg_newDraw_mp.cpp
+oc/cgame_mp/cg_compassfriendlies_mp.cpp
+oc/cgame_mp/cg_draw_mp.cpp
+oc/cgame_mp/cg_ents_mp.cpp
+oc/cgame_mp/cg_marks_mp.cpp
+oc/cgame_mp/cg_view_mp.cpp
+oc/cgame_mp/cg_animtree_mp.cpp
+oc/cgame_mp/cg_servercmds_mp.cpp
+oc/cgame_mp/cg_shellshock.cpp
+oc/cgame_mp/cg_info_mp.cpp
+oc/cgame_mp/cg_weapons.cpp
+oc/cgame_mp/offhandweapons_mp.cpp
+cgame/cg_effects_load_obj.cpp
+oc/cgame_mp/cg_localents_mp.cpp
+oc/cgame_mp/cg_scoreboard_mp.cpp
+oc/cgame_mp/cg_players_mp.cpp
+oc/cgame_mp/cg_hudelem_mp.cpp
+oc/cgame_mp/cg_predict_mp.cpp
+cgame/cg_predict_mp.cpp
+oc/cgame_mp/cg_snapshot_mp.cpp
+oc/client_mp/cl_gamepad.cpp
+oc/cgame_mp/cg_playerstate_mp.cpp
+oc/cgame_mp/cg_event_mp.cpp
+speex/gain_table.c /TP
+speex/exc_5_64_table.c /TP
+speex/hexc_table.c /TP
+speex/gain_table_lbr.c /TP
+speex/exc_5_256_table.c /TP
+speex/exc_8_128_table.c /TP
+speex/exc_20_32_table.c /TP
+speex/hexc_10_32_table.c /TP
+speex/exc_10_16_table.c /TP
+speex/exc_10_32_table.c /TP
+speex/lbr_48k_tables.c /TP
+speex/speex.c /TP
+speex/bits.c /TP
+speex/modes.c /TP
+speex/lsp_tables_nb.c /TP
+speex/high_lsp_tables.c /TP
+speex/misc.c /TP
+speex/quant_lsp.c /TP
+speex/sb_celp.c /TP
+speex/nb_celp.c /TP
+speex/cb_search.c /TP
+speex/vbr.c /TP
+speex/ltp.c /TP
+speex/lsp.c /TP
+speex/filters.c /TP
+speex/lpc.c /TP
+speex/vq.c /TP
+speex/speex_callbacks.c /TP
+bgame/bg_weapons.cpp
+bgame/bg_animation_mp.cpp
+game/g_main_mp.cpp
+game/g_client_mp.cpp
+game/g_active_mp.cpp
+game/g_cmds_mp.cpp
+game/g_scr_main_mp.cpp
+game/g_svcmds_mp.cpp
+game/g_utils_mp.cpp
+game/g_spawn_mp.cpp
+bgame/bg_mantle.cpp
+game/scr_const_mp.cpp
+bgame/bg_misc.cpp
+bgame/bg_misctables.cpp
+bgame/bg_pmove.cpp
+bgame/bg_weapons_load_obj.cpp
+game/g_misc_mp.cpp
+game/g_items_mp.cpp
+game/g_team_mp.cpp
+game/g_missile_mp.cpp
+game/g_combat_mp.cpp
+game/g_trigger_mp.cpp
+game/g_mover_mp.cpp
+game/g_hudelem_mp.cpp
+game/g_weapon_mp.cpp
+game/g_scr_mover_mp.cpp
+game/g_client_script_cmd_mp.cpp
+game/player_use_mp.cpp
+game/g_load_utils.cpp
+game/g_client_fields_mp.cpp
+bgame/bg_jump.cpp
+bgame/bg_slidemove.cpp
+game/g_weapon_load_obj.cpp
+oc/ui_mp/ui_main_mp.cpp
+oc/ui_mp/ui_shared_mp.cpp
+oc/ui/ui_shared_obj.cpp
+oc/ui_mp/ui_atoms.cpp
+oc/ui/ui_utils.cpp
+oc/ui_mp/ui_console_mode.cpp
+oc/ui_mp/ui_gameinfo_mp.cpp
+oc/ui_mp/ui_gamepad_menu.cpp
+oc/win32/gfx_dll_v60.cpp
+oc/win32/gfx_v60_threads.cpp
